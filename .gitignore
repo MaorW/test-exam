@@ -1,0 +1,5 @@
+.terraform*
+.git
+terraform.tfstate*
+tfplan
+final-project-key
