@@ -3,13 +3,6 @@ resource "aws_vpc" "vpc" {
   cidr_block           = var.cidr_vpc
   enable_dns_support   = true
   enable_dns_hostnames = true
-
-
-  variable "vpc_id" {}
-
-  data "aws_vpc" "selected" {
-    id = var.vpc_id
-  }
 }
 
 /* Internet Gateway */
@@ -46,14 +39,6 @@ resource "aws_security_group" "leumi_SG" {
     "Name" = "Leumi http access"
   }
 
-  // Allow SSH Transport
-  ingress {
-    from_port = 22
-    protocol = "tcp"
-    to_port = 22
-    cidr_blocks = ["147.235.220.59/32"]
-  }
-
   // Allow Port 80 for Leumi's IP
   ingress {
     from_port = 80
@@ -62,13 +47,6 @@ resource "aws_security_group" "leumi_SG" {
     cidr_blocks = ["91.231.246.50/32"]
   }
   
-  ingress {
-    from_port = 80
-    protocol = "tcp"
-    to_port = 80
-    cidr_blocks = ["147.235.220.59/32"]
-  }
-
   egress {
     from_port       = 0
     to_port         = 0
@@ -90,28 +68,22 @@ resource "aws_eip" "test-eip" {
   }
 }
 
+  resource "aws_eip_association" "eip_assoc" {
+    instance_id   = "${aws_instance.test-instance.id}"
+    allocation_id = "${aws_eip.test-eip.id}"
+  }
+
 /* Network Load Balancer */
 resource "aws_lb" "test-nlb" {
   name = "test-spoke-nlb"
-  internal = false
   load_balancer_type = "network"
+  internal = false
+  subnets = [
+    "${aws_subnet.subnet_public.id}"
+  ]
 }  
 
-# NLB TEST target group
-resource "aws_lb_target_group" "nlb-tg" {
-  port = 80
-  protocol = "TCP"
-  vpc_id = data.aws_vpc.vpc.id
-
-  health_check {
-    interval            = 30
-    timeout             = 10
-    unhealthy_threshold = 2
-    protocol            = "TCP"
-  }
-}
-
-# nlb listener attachment
+# nlb listener
 resource "aws_lb_listener" "nlb_listener" {
   load_balancer_arn = aws_lb.test-nlb.arn
   port              = 80
@@ -123,10 +95,24 @@ resource "aws_lb_listener" "nlb_listener" {
   }
 }
 
+# NLB TEST target group
+resource "aws_lb_target_group" "nlb-tg" {
+  port = 80
+  protocol = "TCP"
+  vpc_id = aws_vpc.vpc.id
+
+  health_check {
+    interval            = 30
+    timeout             = 10
+    unhealthy_threshold = 2
+    protocol            = "TCP"
+  }
+}
+
 # nlb-target-group-attachment
-resource "aws_lb_target_group_attachment" "nlb-tg-attachment" {
+resource "aws_lb_target_group_attachment" "nlb-tg-instance-attachment" {
   target_group_arn = aws_lb_target_group.nlb-tg.arn
-  target_id = aws_eip.test-eip.id
+  target_id = aws_instance.test-instance.id
   port = 80
 }
 
