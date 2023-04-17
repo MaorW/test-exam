@@ -1,0 +1,26 @@
+A. 
+I’d check the Record’s value on the Route53 service.
+I’d check the NameServer of the Route53 service.
+I’d check the rules’ settings of the CHECKPOINT FW EC2.
+I’d check the connectivity of the TEST SPOKE and INSPECTION VPCs.
+I’d do a DNS text validation with the dig command.
+
+B.
+The Outbound rules of the SG which are attached to the TEST EC2 do not set well.
+The Route Table of the TEST SPOKE VPC does not forward the connection to the NGW of the ENGRESS VPC.
+The ENGRESS VPC’s service componence settings.
+The TGW settings.
+
+C. 
+1. pull access denied means that there is an authorization issue.
+2. container pull time out means that there's a connection issue between the TEST EC2 to the Nexus EC2.
+3. docker daemon is not running means that something's wrong with the Docker process, probably it down.
+
+
+D.
+I'd make sure that port 443 is open on the OS's FW, SG, and NACL.
+moreover, I'd make sure that the process of the web service is up, and check with the 'netstat' command that the port is used correctly for the web service.
+
+E.
+The issue is probably because there isn't 'telnet' pkg on the server.
+If I couldn't download and install this pkg with the "sudo yum install telnet" command, I'll make sure that there is an Outbound connection from this instance, and that the pkg management is updated with the "sudo yum update" command
